@@ -2,9 +2,9 @@ CC := $(shell echo g++||echo cl)
 RC := $(shell echo windres||echo rc)
 
 ifeq ($(CC),g++)
-	CXXFLAGS := -o ./out/rbxaltunlocker.exe -O3 -Wl,--subsystem,windows ./src/main.cpp ./res/icon.res 
+	CXXFLAGS := -o ./out/rbxaltunlocker.exe -O3 -s -Wl,--subsystem,windows ./src/main.cpp ./res/icon.res 
 else ifeq ($(CC),cl)
-	CXXFLAGS := /Fe:out\rbxaltunlocker.exe /Fo:out\main.obj /O2 /DNDEBUG /EHsc ./src/main.cpp ./res/icon.res
+	CXXFLAGS := /Fe:out\rbxaltunlocker.exe /Fo:out\main.obj /O2 /DNDEBUG /EHsc ./src/main.cpp ./res/icon.res /link /DEBUG:NONE
 endif
 
 ifeq ($(RC),windres)
