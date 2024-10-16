@@ -4,7 +4,8 @@
 #pragma comment(lib, "user32.lib")
 #pragma comment(lib, "shell32.lib")
 
-HANDLE mutex;
+HANDLE rbxMutex;
+HANDLE rauMutex;
 
 HWND hWindow;
 NOTIFYICONDATA iconData;
@@ -28,8 +29,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         break;
 
     case WM_DESTROY:
-        ReleaseMutex(mutex);
-        CloseHandle(mutex);
+        ReleaseMutex(rbxMutex);
+        CloseHandle(rbxMutex);
+
+        ReleaseMutex(rauMutex);
+        CloseHandle(rauMutex);
 
         Shell_NotifyIcon(NIM_DELETE, &iconData);
         PostQuitMessage(0);
@@ -56,12 +60,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 break;
 
             case 2:
-                ReleaseMutex(mutex);
-                CloseHandle(mutex);
-
-                Shell_NotifyIcon(NIM_DELETE, &iconData);
-                PostQuitMessage(0);
-
+                DestroyWindow(hWindow);
                 break;
             }
         }
@@ -75,22 +74,52 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+void CreateRAUConsole()
 {
-    mutex = CreateMutexA(NULL, TRUE, "ROBLOX_singletonMutex");
-
     AllocConsole();
     FILE *out;
     freopen_s(&out, "CONOUT$", "w", stdout);
 
     SetConsoleTitleA("rbxaltunlocker");
+}
 
-    std::cout << "Enabled. Minimizing to system tray..." << std::endl;
-
-    Sleep(2000);
-
+void CloseRAUConsole()
+{
     fclose(stdout);
     FreeConsole();
+}
+
+bool CreateRBXMutex()
+{
+    rbxMutex = CreateMutexA(NULL, TRUE, "ROBLOX_singletonMutex");
+
+    if (GetLastError() == ERROR_ALREADY_EXISTS)
+        return false;
+
+    return true;
+}
+
+int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+{
+    rauMutex = CreateMutexA(NULL, FALSE, "RAUMutex");
+    if (GetLastError() == ERROR_ALREADY_EXISTS)
+    {
+        MessageBoxA(NULL, "rbxaltunlocker is already running!", "Error", MB_OK);
+        return WM_QUIT;
+    }
+
+    if (CreateRBXMutex())
+    {
+        CreateRAUConsole();
+        std::cout << "Enabled. Minimizing to system tray..." << std::endl;
+        Sleep(2000);
+        CloseRAUConsole();
+    }
+    else
+    {
+        MessageBoxA(NULL, "Launch rbxaltunlocker before Roblox!", "Error", MB_OK);
+        return WM_QUIT;
+    }
 
     WNDCLASS wc = {};
     wc.lpfnWndProc = WindowProc;
