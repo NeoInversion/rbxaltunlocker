@@ -1,4 +1,19 @@
-rbxaltunlocker:.\src\main.cpp .\res\rbxaltunlocker.ico
-	cl /O2 /DNDEBUG /EHsc /Feout\rbxaltunlocker.exe /Foout\rbxaltunlocker.obj ./src/main.cpp ./res/icon.res
-icon:.\res\icon.rc .\res\rbxaltunlocker.ico
-	rc ./res/icon.rc
+CC := $(shell echo g++||echo cl)
+RC := $(shell echo windres||echo rc)
+
+ifeq ($(CC),g++)
+	CXXFLAGS := -o ./out/rbxaltunlocker.exe -O3 -Wl,--subsystem,windows ./src/main.cpp ./res/icon.res 
+else ifeq ($(CC),cl)
+	CXXFLAGS := /Fe:out\rbxaltunlocker.exe /Fo:out\main.obj /O2 /DNDEBUG /EHsc ./src/main.cpp ./res/icon.res
+endif
+
+ifeq ($(RC),windres)
+	RCFLAGS := ./res/icon.rc -O coff -o ./res/icon.res
+else ifeq ($(RC),rc)
+	RCFLAGS := ./res/icon.rc
+endif
+
+rbxaltunlocker: icon
+	$(CC) $(CXXFLAGS)
+icon:
+	$(RC) $(RCFLAGS)
